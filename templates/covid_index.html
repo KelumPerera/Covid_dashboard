@@ -3,10 +3,11 @@
 <head>
     <title> COVID-19 WORLD WIDE DATA</title>
     <!-- add icon link -->
+   <!-- <link rel="shortcut icon" type="image/png" href="rsz_covid_pic.png">
     <link rel = "icon" href = 
     "https://www.google.com/url?sa=i&url=https%3A%2F%2Fbcradiology.ca%2Fposition-statement-on-access-to-covid-19-vaccinations%2F&psig=AOvVaw16yfNJGUmtKSylB919soxP&ust=1620474585207000&source=images&cd=vfe&ved=2ahUKEwjR5rWxwLfwAhVfN7cAHSeEDa8QjRx6BAgAEAc" 
             type = "image/x-icon">
-
+    -->
 </head>
 <style type="text/css">
     .container{
@@ -52,7 +53,7 @@
                 <h1 style="text-align: center;">{{total | intcomma }}</h1>
                 <p style="text-align: center;">Confirmed cases<br>Infection Risk {{infectionRisk}} % <br></p>
             </div>
-            <div class="container" style="background-color: green;height: 105px;width:220px">
+            <div class="container" style="background-color: green;height: 105px;width:230px">
                 <h1 style="text-align: center;color: white">{{recovered | intcomma}}</h1>
                 <p style="text-align: center;color: white">Recovered <br> Recovered {{recoveryProporation}} % <br></p>
             </div>
@@ -60,16 +61,16 @@
                 <h1 style="text-align: center;color: white">{{deaths | intcomma}}</h1>
                 <p style="text-align: center;color: white">Deaths <br> Fatality {{fatalityRate}} % <br> </p>
             </div>
-              <div class="container" style="background-color: yellow;height: 105px;width:250px">
+              <div class="container" style="background-color: yellow;height: 105px;width:240px">
                 <h1 style="text-align: center;">{{active | intcomma}}</h1>
-                <p style="text-align: center;">Active</p>
+                <p style="text-align: center;">Active {{ activePercentage}} %</p>
             </div>
     
         </div>
         
 
         <div class="d-flex justify-content-right align-items-right">
-            <div display:inline-block; class="container" style="background-color: green;height: 300px;width:300px">
+            <div display:inline-block; class="container" style="background-color: green;height: 300px;width:280px">
             <div class="vaccinations" style="display: inline; vertical-align: top;">
                 <h1 style="text-align: center;color: white;  vertical-align: top">{{ peopleFully_vaccinations | intcomma}} </h1>
                 <p style="text-align: center;color: white;  vertical-align: top">Fully vaccinated persons <br></p>
@@ -85,7 +86,7 @@
         </div>
             
             
-            <div class="container" style="background-color: green;height: 105px;width:260px">
+            <div class="container" style="background-color: green;height: 105px;width:265px">
                 <h1 style="text-align: center;color: white">{{tests | intcomma}}</h1>
                 <p style="text-align: center;color: white">Tests <br>Tested {{testPercentage}} % <br></p>
             </div>
@@ -191,7 +192,7 @@ var myChart = new Chart(ctx, {
             data: [{% for recovered in linePlot_recovered_daily %}"{{ recovered }}" ,{%endfor%}],
             borderWidth: 1,
             backgroundColor: "transparent",
-            borderColor: "Greene",
+            borderColor: "Green",
             
          },
          {

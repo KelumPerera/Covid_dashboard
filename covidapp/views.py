@@ -171,6 +171,9 @@ def covidView(request):
             deathstoday = summaryResponse[x]['NewDeaths']
             population = summaryResponse[x]['Population']
             tests = summaryResponse[x]['TotalTests']
+            activePercentage = float("{:.2f}".format(int(active)/int(total)*100))
+
+
     
     summaryResponse_df = pd.json_normalize(summaryResponse)
     now1 = datetime.now()
@@ -180,6 +183,9 @@ def covidView(request):
         population = summaryResponse_df.loc[:, 'Population'].sum()
         summaryResponse_df['TotalTests'] = pd.to_numeric(summaryResponse_df['TotalTests'])
         tests = summaryResponse_df.loc[:, 'TotalTests'].sum()
+        infectionRisk = float("{:.2f}".format(int(total)/int(population)*100))
+        testPercentage = float("{:.2f}".format(int(tests)/int(population)*100))
+        #activePercentage = float("{:.2f}".format(int(active)/int(total)*100))
 
     now2 = datetime.now()
     print(now2)            
@@ -293,7 +299,7 @@ def covidView(request):
     now3 = datetime.now()
     print(now3)
     
-    context = {'mylist': mylist, 'selectedCountry': selectedCountry, 'infectionRisk': infectionRisk, 'fatalityRate': fatalityRate, 'recoveryProporation': recoveryProporation, 'testPercentage':testPercentage , 'vaccinatedProporation':vaccinatedProporation, 'new': new, 'active': active, 'critical': critical, 'recovered': recovered, 'recoveredtoday': recoveredtoday, 'total': total, 'deaths': deaths , 'deathstoday' : deathstoday , 'population': population , 'tests': tests, 'totalCount' : totalCount, 'barPlotTotals': barPlotTotals, 'barPlotNames' : barPlotNames , 'peopleFully_vaccinations' : peopleFully_vaccinations, 'People_vaccinations':People_vaccinations, 'total_vaccinations': total_vaccinations, 'vaccine_Updated_Date': vaccine_Updated_Date, 'linePlot_date': linePlot_date,'linePlot_confirmed_daily':linePlot_confirmed_daily, 'linePlot_cases_new_movingAvg_7D':linePlot_cases_new_movingAvg_7D, 'linePlot_death_daily':linePlot_death_daily, 'linePlot_death_new_movingAvg_7D':linePlot_death_new_movingAvg_7D, 'linePlot_recovered_daily':linePlot_recovered_daily, 'linePlot_recoverd_new_movingAvg_7D':linePlot_recoverd_new_movingAvg_7D,'linePlot_active_daily':linePlot_active_daily, 'linePlot_active_new_movingAvg_7D': linePlot_active_new_movingAvg_7D}
+    context = {'mylist': mylist, 'selectedCountry': selectedCountry, 'infectionRisk': infectionRisk, 'fatalityRate': fatalityRate, 'recoveryProporation': recoveryProporation, 'testPercentage':testPercentage , 'vaccinatedProporation':vaccinatedProporation, 'activePercentage' :activePercentage, 'new': new, 'active': active, 'critical': critical, 'recovered': recovered, 'recoveredtoday': recoveredtoday, 'total': total, 'deaths': deaths , 'deathstoday' : deathstoday , 'population': population , 'tests': tests, 'totalCount' : totalCount, 'barPlotTotals': barPlotTotals, 'barPlotNames' : barPlotNames , 'peopleFully_vaccinations' : peopleFully_vaccinations, 'People_vaccinations':People_vaccinations, 'total_vaccinations': total_vaccinations, 'vaccine_Updated_Date': vaccine_Updated_Date, 'linePlot_date': linePlot_date,'linePlot_confirmed_daily':linePlot_confirmed_daily, 'linePlot_cases_new_movingAvg_7D':linePlot_cases_new_movingAvg_7D, 'linePlot_death_daily':linePlot_death_daily, 'linePlot_death_new_movingAvg_7D':linePlot_death_new_movingAvg_7D, 'linePlot_recovered_daily':linePlot_recovered_daily, 'linePlot_recoverd_new_movingAvg_7D':linePlot_recoverd_new_movingAvg_7D,'linePlot_active_daily':linePlot_active_daily, 'linePlot_active_new_movingAvg_7D': linePlot_active_new_movingAvg_7D}
     return render(request, "covid_index.html", context)
     
 
