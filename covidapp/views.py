@@ -235,7 +235,7 @@ def covidView(request):
             total_vaccinations = 0
         if 'peopleFully_vaccinations' not in locals():
             peopleFully_vaccinations= 0
-        if 'People_vaccinations' in locals():
+        if ('People_vaccinations' in locals() and People_vaccinations != 0) :
             vaccinatedProporation = float("{:.2f}".format(int(People_vaccinations)/int(population)*100))
         else:
             vaccinatedProporation = float("{:.2f}".format(int(total_vaccinations)/int(population)*100))
