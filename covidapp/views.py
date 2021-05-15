@@ -10,7 +10,7 @@ import pytz    # $ pip install pytz
 import tzlocal
 from dateutil import parser
 from copy import deepcopy
-
+'''
 confirmedGlobal=pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv',encoding='utf-8',na_values=None)
 totalCount = confirmedGlobal[confirmedGlobal.columns[-1]].sum()
 barPlotData = confirmedGlobal[['Country/Region',confirmedGlobal.columns[-1]]].groupby('Country/Region').sum()
@@ -20,8 +20,16 @@ barPlotData = barPlotData.sort_values(by='Totals', ascending=False)
 
 barPlotTotals = barPlotData['Totals'].values.tolist()
 barPlotNames = barPlotData['Country/Region'].values.tolist()
+'''
 
 
+
+import pandas as pd
+import numpy as np
+import json
+import requests
+
+confirmedGlobal=pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv',encoding='utf-8',na_values=None)
 
 
 deathGLobal=pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv',encoding='utf-8',na_values=None)
@@ -54,42 +62,54 @@ covid_data_global['Lat'] = 0
 covid_data_global['Long'] = 0
 
 covid_data = covid_data.append(covid_data_global)
-covid_data.sort_values(by=['Province/State', 'Country/Region', 'Lat', 'Long', 'date'], inplace=True)
+del covid_data_global
+
+covid_data = covid_data.groupby(['Country/Region','date']).agg(confirmed = ('confirmed','sum'),death= ('death','sum'),recovered= ('recovered','sum'),active= ('active','sum'), ).reset_index()
+
+covid_data.sort_values(by=['Country/Region', 'date'], inplace=True)
 
 
-covid_data['confirmed_daily'] = np.where(((covid_data['Country/Region']==covid_data['Country/Region'].shift(1)) & (covid_data['Province/State']==covid_data['Province/State'].shift(1)) ),covid_data['confirmed'] - covid_data['confirmed'].shift(1),0)
+covid_data['confirmed_daily'] = np.where(((covid_data['Country/Region']==covid_data['Country/Region'].shift(1)) ),covid_data['confirmed'] - covid_data['confirmed'].shift(1),0)
 
-covid_data['death_daily'] = np.where(((covid_data['Country/Region']==covid_data['Country/Region'].shift(1)) & (covid_data['Province/State']==covid_data['Province/State'].shift(1)) ),covid_data['death'] - covid_data['death'].shift(1),0)
-covid_data['recovered_daily'] = np.where(((covid_data['Country/Region']==covid_data['Country/Region'].shift(1)) & (covid_data['Province/State']==covid_data['Province/State'].shift(1)) ),covid_data['recovered'] - covid_data['recovered'].shift(1),0)
-covid_data['active_daily'] = np.where(((covid_data['Country/Region']==covid_data['Country/Region'].shift(1)) & (covid_data['Province/State']==covid_data['Province/State'].shift(1)) ),covid_data['active'] - covid_data['active'].shift(1),0)
+covid_data['death_daily'] = np.where(((covid_data['Country/Region']==covid_data['Country/Region'].shift(1))  ),covid_data['death'] - covid_data['death'].shift(1),0)
+covid_data['recovered_daily'] = np.where(((covid_data['Country/Region']==covid_data['Country/Region'].shift(1))  ),covid_data['recovered'] - covid_data['recovered'].shift(1),0)
+covid_data['active_daily'] = np.where(((covid_data['Country/Region']==covid_data['Country/Region'].shift(1))  ),covid_data['active'] - covid_data['active'].shift(1),0)
 
-_covid_data_confirmed_daily = covid_data.groupby(['Country/Region','Province/State']).rolling('7D', on="date")['confirmed_daily'].mean().reset_index()
+covid_data['recovered_daily'] = np.where(((covid_data['Country/Region']== "US") & (covid_data['date']== "2020-12-14") ),0,covid_data['recovered_daily'])
+covid_data['active_daily'] = np.where(((covid_data['Country/Region']== "US") & (covid_data['date']== "2020-12-14") ),(covid_data['active_daily']-6298082),covid_data['active_daily'])
+
+covid_data['recovered_daily'] = np.where(((covid_data['Country/Region']== "World") & (covid_data['date']== "2020-12-14") ),(covid_data['recovered_daily']+6298082),covid_data['recovered_daily'])
+covid_data['active_daily'] = np.where(((covid_data['Country/Region']== "World") & (covid_data['date']== "2020-12-14") ),(covid_data['active_daily']-6298082),covid_data['active_daily'])
+
+
+_covid_data_confirmed_daily = covid_data.groupby(['Country/Region']).rolling('7D', on="date")['confirmed_daily'].mean().reset_index()
 covid_data_confirmed_daily = pd.DataFrame(_covid_data_confirmed_daily)
 covid_data_confirmed_daily = covid_data_confirmed_daily.rename(columns={"confirmed_daily":'cases_new_movingAvg_7D'})
-covid_data = covid_data.merge(covid_data_confirmed_daily, how='left', left_on=['date', 'Country/Region','Province/State'] , right_on = ['date', 'Country/Region','Province/State'])
+covid_data = covid_data.merge(covid_data_confirmed_daily, how='left', left_on=['date', 'Country/Region'] , right_on = ['date', 'Country/Region'])
 del covid_data_confirmed_daily, _covid_data_confirmed_daily
 
-_covid_data_death_daily = covid_data.groupby(['Country/Region','Province/State']).rolling('7D', on="date")['death_daily'].mean().reset_index()
+_covid_data_death_daily = covid_data.groupby(['Country/Region']).rolling('7D', on="date")['death_daily'].mean().reset_index()
 covid_data_death_daily = pd.DataFrame(_covid_data_death_daily)
 covid_data_death_daily = covid_data_death_daily.rename(columns={"death_daily":'death_new_movingAvg_7D'})
-covid_data = covid_data.merge(covid_data_death_daily, how='inner', left_on=['date', 'Country/Region','Province/State'] , right_on = ['date', 'Country/Region','Province/State'])
+covid_data = covid_data.merge(covid_data_death_daily, how='inner', left_on=['date', 'Country/Region'] , right_on = ['date', 'Country/Region'])
 del covid_data_death_daily, _covid_data_death_daily
 
-_covid_data_recovered_daily = covid_data.groupby(['Country/Region','Province/State']).rolling('7D', on="date")['recovered_daily'].mean().reset_index()
+_covid_data_recovered_daily = covid_data.groupby(['Country/Region']).rolling('7D', on="date")['recovered_daily'].mean().reset_index()
 covid_data_recovered_daily = pd.DataFrame(_covid_data_recovered_daily)
 covid_data_recovered_daily = covid_data_recovered_daily.rename(columns={"recovered_daily":'recoverd_new_movingAvg_7D'})
 
-covid_data = covid_data.merge(covid_data_recovered_daily, how='inner', left_on=['date', 'Country/Region','Province/State'] , right_on = ['date', 'Country/Region','Province/State'])
+covid_data = covid_data.merge(covid_data_recovered_daily, how='inner', left_on=['date', 'Country/Region'] , right_on = ['date', 'Country/Region'])
 del covid_data_recovered_daily, _covid_data_recovered_daily
 
-_covid_data_active_daily = covid_data.groupby(['Country/Region','Province/State']).rolling('7D', on="date")['active_daily'].mean().reset_index()
+_covid_data_active_daily = covid_data.groupby(['Country/Region']).rolling('7D', on="date")['active_daily'].mean().reset_index()
 covid_data_active_daily = pd.DataFrame(_covid_data_active_daily)
 covid_data_active_daily = covid_data_active_daily.rename(columns={"active_daily":'active_new_movingAvg_7D'})
 
-covid_data = covid_data.merge(covid_data_active_daily, how='inner', left_on=['date', 'Country/Region','Province/State'] , right_on = ['date', 'Country/Region','Province/State'])
+covid_data = covid_data.merge(covid_data_active_daily, how='inner', left_on=['date', 'Country/Region'] , right_on = ['date', 'Country/Region'])
 del covid_data_active_daily, _covid_data_active_daily
 
-
+cols = ['recovered', 'active','confirmed_daily','death_daily','recovered_daily','active_daily','cases_new_movingAvg_7D','death_new_movingAvg_7D','recoverd_new_movingAvg_7D','active_new_movingAvg_7D']
+covid_data[cols] = covid_data[cols].round(2)
 
 url = "https://vaccovid-coronavirus-vaccine-and-treatment-tracker.p.rapidapi.com/api/npm-covid-data/"
 
@@ -264,7 +284,7 @@ def covidView(request):
     rename_country = {"United States":"US","South Korea":"Korea, South","Taiwan":"Taiwan*", }
     for c in rename_country:
         selectedCountry = selectedCountry.replace(c,str(rename_country[c]))
-    covid_data_for_line = covid_data[((covid_data['Country/Region']==str(selectedCountry)) |(covid_data['Province/State']==str(selectedCountry)))].copy()
+    covid_data_for_line = covid_data[((covid_data['Country/Region']==str(selectedCountry)) )].copy()
     covid_data_for_line = covid_data_for_line.sort_values(by='date', ascending=True)
     if covid_data_for_line.empty == False:
         if (covid_data_for_line['confirmed_daily'][covid_data_for_line.index[-1]] == 0):
@@ -299,7 +319,7 @@ def covidView(request):
     now3 = datetime.now()
     print(now3)
     
-    context = {'mylist': mylist, 'selectedCountry': selectedCountry, 'infectionRisk': infectionRisk, 'fatalityRate': fatalityRate, 'recoveryProporation': recoveryProporation, 'testPercentage':testPercentage , 'vaccinatedProporation':vaccinatedProporation, 'activePercentage' :activePercentage, 'new': new, 'active': active, 'critical': critical, 'recovered': recovered, 'recoveredtoday': recoveredtoday, 'total': total, 'deaths': deaths , 'deathstoday' : deathstoday , 'population': population , 'tests': tests, 'totalCount' : totalCount, 'barPlotTotals': barPlotTotals, 'barPlotNames' : barPlotNames , 'peopleFully_vaccinations' : peopleFully_vaccinations, 'People_vaccinations':People_vaccinations, 'total_vaccinations': total_vaccinations, 'vaccine_Updated_Date': vaccine_Updated_Date, 'linePlot_date': linePlot_date,'linePlot_confirmed_daily':linePlot_confirmed_daily, 'linePlot_cases_new_movingAvg_7D':linePlot_cases_new_movingAvg_7D, 'linePlot_death_daily':linePlot_death_daily, 'linePlot_death_new_movingAvg_7D':linePlot_death_new_movingAvg_7D, 'linePlot_recovered_daily':linePlot_recovered_daily, 'linePlot_recoverd_new_movingAvg_7D':linePlot_recoverd_new_movingAvg_7D,'linePlot_active_daily':linePlot_active_daily, 'linePlot_active_new_movingAvg_7D': linePlot_active_new_movingAvg_7D}
+    context = {'mylist': mylist, 'selectedCountry': selectedCountry, 'infectionRisk': infectionRisk, 'fatalityRate': fatalityRate, 'recoveryProporation': recoveryProporation, 'testPercentage':testPercentage , 'vaccinatedProporation':vaccinatedProporation, 'activePercentage' :activePercentage, 'new': new, 'active': active, 'critical': critical, 'recovered': recovered, 'recoveredtoday': recoveredtoday, 'total': total, 'deaths': deaths , 'deathstoday' : deathstoday , 'population': population , 'tests': tests,  'peopleFully_vaccinations' : peopleFully_vaccinations, 'People_vaccinations':People_vaccinations, 'total_vaccinations': total_vaccinations, 'vaccine_Updated_Date': vaccine_Updated_Date, 'linePlot_date': linePlot_date,'linePlot_confirmed_daily':linePlot_confirmed_daily, 'linePlot_cases_new_movingAvg_7D':linePlot_cases_new_movingAvg_7D, 'linePlot_death_daily':linePlot_death_daily, 'linePlot_death_new_movingAvg_7D':linePlot_death_new_movingAvg_7D, 'linePlot_recovered_daily':linePlot_recovered_daily, 'linePlot_recoverd_new_movingAvg_7D':linePlot_recoverd_new_movingAvg_7D,'linePlot_active_daily':linePlot_active_daily, 'linePlot_active_new_movingAvg_7D': linePlot_active_new_movingAvg_7D}
     return render(request, "covid_index.html", context)
     
 
